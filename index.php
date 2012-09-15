@@ -5,6 +5,7 @@ include("dbh.php");
 include("data_source.php");
 include("data_structure.php");
 include("data_view.php");
+include("component.php");
 
 $db = new MySQLiHandler(
   $SETTING_DB_HOST,
@@ -13,19 +14,8 @@ $db = new MySQLiHandler(
   $SETTING_DB_DATABASE
 );
 
-$source = new LAProxyDataSource($db);
-$source->filterByUsers(array(139,150));
-$data = $source->getStats();
-echo $source->getQuery();
-$struct = new MatrixDataStructure();
-$struct->setYField("timestamp");
-$struct->setXField("user");
-$struct->setValueField("link");
-$struct->setMatrixLayout(MatrixDataStructure::YXLayout);
-$struct->loadData($data);
-$view = new TableView();
-$view->setCSSClass("tabular");
-$table = $view->display($struct);
+$visited_docs = new VisitedDocumentList($db);
+$visited_docs->filterByUsers(array(139,150));
 ?>
 <!DOCTYPE html>
 <html>
@@ -36,6 +26,6 @@ $table = $view->display($struct);
   border: thin solid black;
 }
 </style>
-<?php echo $table; ?>
+<?php echo $visited_docs->display(); ?>
 </body>
 </html>
