@@ -1,6 +1,38 @@
 <?php
-
 class TableView extends DataView {
+  private $c_mod;
+  private $r_mod;
+  private $v_mod;
+  
+  public function __construct(){
+    $this->c_mod = (function($c){ return $c; });
+    $this->r_mod = (function($r){ return $r; });
+    $this->v_mod = (function($v){ return $v; });
+  }
+
+  public function setColumnLabelModifier($mod){
+    $this->c_mod = $mod;
+  }
+
+  protected function getColumnLabelModifier(){
+    return $this->c_mod;
+  }
+  
+  public function setRowLabelModifier($mod){
+    $this->r_mod = $mod;
+  }
+  
+  public function getRowLabelModifier(){
+    return $this->r_mod;
+  }
+  
+  public function setValueModifier($mod){
+    $this->v_mod = $mod;
+  }
+  
+  public function getValueModifier(){
+    return $this->v_mod;
+  }
 
   protected function displayStructure($struct){
     if($struct instanceof MatrixDataStructure){
@@ -18,12 +50,16 @@ class TableView extends DataView {
     $rowstr = "";
     $headerstr = "";
     $headers = array("");
-    // Display headers
+
+    $rmod = $this->getRowLabelModifier();
+    $cmod = $this->getColumnLabelModifier();
+    $vmod = $this->getValueModifier();
+    
     foreach($matrix as $row=>$t){
-      $rowstr .= "\t<tr>\n\t\t<td>$row</td>\n";
+      $rowstr .= "\t<tr>\n\t\t<td>".$rmod($row)."</td>\n";
       foreach($t as $col=>$value){
-        if($headerstr == "") $headers[] = $col;
-        $rowstr .= "\t\t<td>".$value."</td>\n";
+        if($headerstr == "") $headers[] = $cmod($col);
+        $rowstr .= "\t\t<td>".$vmod($value)."</td>\n";
       }
       if($headerstr == ""){
         foreach($headers as $header){

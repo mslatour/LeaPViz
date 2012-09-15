@@ -73,8 +73,10 @@ class AggregatedDocumentList extends Component {
     $struct->setXField("date");
     $struct->setValueField("count");
     $struct->setMatrixLayout(MatrixDataStructure::YXLayout);
+    $struct->setEmptyValue("0");
     $struct->loadData($data);
     $view = new TableView();
+    $view->setColumnLabelModifier(function($date){ return date("d/M", $date); });
     $view->setCSSClass("tabular");
     $table = $view->display($struct);
     return $table;
