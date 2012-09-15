@@ -7,6 +7,7 @@ $visited_docs->getSource()->filterByUsers(range(2,148));
 // Only show statistics from before August 2012
 $visited_docs->getSource()->filterByDate(0,1343797200);
 
+$visited_docs->getView()->setCSSClass("tabular");
 $visited_docs->getView()->setRowLabelModifier(
   function($url){
     if(
