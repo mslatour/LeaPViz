@@ -37,6 +37,13 @@ abstract class DataSource {
       "value" => $this->escape($value,$type)
     );
   }
+  
+  protected function filterByFieldBetweenValues($field, $a, $b, $type){
+    $this->filters[$this->escape($field,'field')] = array(
+      "op" => "BETWEEN", 
+      "value" => $this->escape($a, $type)." AND ".$this->escape($b, $type)
+    );
+  }
 
   protected function escape($value, $type = "string"){
     switch($type){
@@ -255,5 +262,8 @@ class LAProxyDataSource extends MySQLiDataSource {
     $this->filterByFieldValue("user","IN",$users,"list");
   }
 
+  public function filterByDate($from, $till){
+    $this->filterByFieldBetweenValues("timestamp",$from,$till, "int");
+  }
 }
 ?>
