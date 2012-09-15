@@ -4,6 +4,7 @@ abstract class DataSource {
   protected $selections = array();
   protected $filters = array();
   protected $orderings = array();
+  protected $groupings = array();
   protected $limit = null;
 
   abstract public function fetchAll($table);
@@ -12,9 +13,10 @@ abstract class DataSource {
     $this->clearSelections();
     $this->clearFilters();
     $this->clearOrderings();
+    $this->clearGroupings();
     $this->clearLimit();
   }
-  
+
   protected function select($fields,$alias=""){
     if(is_array($fields)){
       foreach($fields as $field=>$alias){
@@ -66,6 +68,14 @@ abstract class DataSource {
   public function clearOrderings(){
     $this->orderings = array();
   }
+  
+  protected function group($group){
+    $this->groupings[] = $group;
+  }
+
+  public function clearGroupings(){
+    $this->groupings = array();
+  }
 
   public function limit($from, $to){
     $this->limit = array("from" => intval($from), "to" => intval($to));
@@ -94,10 +104,11 @@ class MySQLiDataSource extends DataSource {
   public function fetchAll($table){
     if($this->dbh != null){
       $this->query = trim(sprintf(
-        "SELECT %s FROM %s %s %s %s",
+        "SELECT %s FROM %s %s %s %s %s",
         $this->createSelectionString(),
         $table,
         $this->createFilterString(),
+        $this->createGroupingString(),
         $this->createOrderingString(),
         $this->createLimitString()
       ));
@@ -160,6 +171,14 @@ class MySQLiDataSource extends DataSource {
     }
     return ($str==""?"":"WHERE ".$str);
   }
+  
+  private function createGroupingString(){
+    $str = "";
+    foreach($this->groupings as $group){
+      $str .= ($str == "" ? "" : ", ").$group;
+    }
+    return ($str==""?"":"GROUP BY ".$str);
+  }
 
   private function createOrderingString(){
     $str = "";
@@ -194,6 +213,7 @@ class LAProxyDataSource extends MySQLiDataSource {
 
   public function getStats(){
     $this->clearSelections();
+    $this->clearGroupings();
     $this->select(array(
       "CONCAT(`user`.`surname`,', ',`user`.`firstname`,' (',`user`.`username`,')')"=>"`user`",
       "FROM_UNIXTIME(`stats`.`timestamp`,'%d-%m-%Y %H:%i:%s')"=>"`timestamp`",
@@ -204,6 +224,24 @@ class LAProxyDataSource extends MySQLiDataSource {
         "`stats` ".
         "LEFT JOIN (`links`,`user`) ".
         "ON (`stats`.`link` = `links`.`url` AND `stats`.`user` = `user`.`id`)".
+      ")"
+    );
+  }
+
+  public function getAggregatedStats(){
+    $this->clearSelections();
+    $this->clearGroupings();
+    $this->select(array(
+      "FROM_UNIXTIME(`stats`.`timestamp`,'%d/%m')"=>"`date`",
+      "`links`.`title`"=>"`link`",
+      "COUNT(`user`)"=>"`count`"
+    ));
+    $this->group("FROM_UNIXTIME(`timestamp` ,'%d-%m-%Y')");
+    return $this->fetchAll(
+      "(".
+        "`stats` ".
+        "LEFT JOIN `links` ".
+        "ON `stats`.`link` = `links`.`url`".
       ")"
     );
   }

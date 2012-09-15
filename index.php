@@ -14,8 +14,9 @@ $db = new MySQLiHandler(
   $SETTING_DB_DATABASE
 );
 
-$visited_docs = new VisitedDocumentList($db);
-$visited_docs->filterByUsers(array(139,150));
+$visited_docs = new AggregatedDocumentList($db);
+$visited_docs->debug();
+//$visited_docs->filterByUsers(array(139,150));
 ?>
 <!DOCTYPE html>
 <html>
