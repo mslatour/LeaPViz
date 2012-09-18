@@ -5,7 +5,10 @@ $visited_docs = new AggregatedDocumentList($db);
 // Only show the range of users representing students.
 $visited_docs->getSource()->filterByUsers(range(2,148));
 // Only show statistics from before August 2012
-$visited_docs->getSource()->filterByDate(0,1343797200);
+//$visited_docs->getSource()->filterByDate(0,1343797200);
+
+// Clear empty cells
+$visited_docs->getStruct()->setEmptyValue("");
 
 $visited_docs->getView()->setCSSClass("tabular");
 $visited_docs->getView()->setRowLabelModifier(
@@ -34,6 +37,12 @@ $visited_docs->getView()->setRowLabelModifier(
     return $url;
   }
 );
+$visited_docs_filter = $visited_docs->getFilterComponent("visited_docs_filter");
+$visited_docs_filter->debug();
+if(isset($_POST)){
+  $visited_docs_filter->process();
+}
+
 ?>
 <!DOCTYPE html>
 <html>
@@ -44,6 +53,12 @@ $visited_docs->getView()->setRowLabelModifier(
   border: thin solid black;
 }
 </style>
+<?php echo $visited_docs_filter->display(); ?>
+<br /><br />
 <?php echo $visited_docs->display(); ?>
+
+<!--<textarea cols='50' rows='100'>
+<?php //echo $tmp->display($visited_docs->getStruct()); ?>
+</textarea>-->
 </body>
 </html>

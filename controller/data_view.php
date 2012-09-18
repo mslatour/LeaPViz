@@ -1,5 +1,64 @@
 <?php
-class TableView extends DataView {
+abstract class DataView {
+  private $classname = "";
+  public function display($data){
+    if(
+      is_object($data) && 
+      $data instanceof DataStructure
+    ){
+      return $this->displayStructure($data);
+    }else if(
+      is_array($data) && 
+      sizeof($data) > 0 &&
+      is_array($data[0])
+    ){
+      return $this->display2DMatrix($data);
+    }else{
+      return false;
+    }
+  }
+  abstract protected function displayStructure($data);
+  abstract protected function display2DMatrix($data);
+}
+
+abstract class HtmlDataView extends DataView {
+  public function setCSSClass($class){
+    $this->classname = $class;
+  }
+  public function getCSSClass(){
+    return $this->classname;
+  }
+}
+
+class JSONView extends DataView {
+
+  protected function displayStructure($struct){
+    if($struct instanceof MatrixDataStructure){
+      if(!$struct->is_empty()){
+        $struct->setMatrixLayout(MatrixDataStructure::YXLayout);
+        $matrix = $struct->getStructure();
+        return $this->display2DMatrix($matrix);
+      }
+    }else{
+      return false;
+    }
+  }
+
+  protected function display2DMatrix($matrix){
+    $json = "";
+    foreach($matrix as $row){
+      $json .= ($json==""?"":",\n");
+      $rowstr = "";
+      foreach($row as $column){
+        $rowstr .= ($rowstr==""?"":", ").json_encode($column);
+      }
+      $json .= "[".$rowstr."]";
+    }
+    return ($json==""?"":"[".$json."]");
+  }
+}
+
+class TableView extends HtmlDataView {
   private $c_mod;
   private $r_mod;
   private $v_mod;
@@ -77,32 +136,5 @@ class TableView extends DataView {
   }
 }
 
-abstract class DataView {
-  private $classname = "";
-  public function display($data){
-    if(
-      is_object($data) && 
-      $data instanceof DataStructure
-    ){
-      return $this->displayStructure($data);
-    }else if(
-      is_array($data) && 
-      sizeof($data) > 0 &&
-      is_array($data[0])
-    ){
-      return $this->display2DMatrix($data);
-    }else{
-      return false;
-    }
-  }
-  public function setCSSClass($class){
-    $this->classname = $class;
-  }
-  public function getCSSClass(){
-    return $this->classname;
-  }
-  abstract protected function displayStructure($data);
-  abstract protected function display2DMatrix($data);
-}
 
 ?>
