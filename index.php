@@ -14,5 +14,6 @@ $db = new MySQLiHandler(
   $SETTING_DB_DATABASE
 );
 
-include("view/list.php");
+//include("view/list.php");
+include("view/graph.php");
 ?>

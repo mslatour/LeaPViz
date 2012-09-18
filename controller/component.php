@@ -54,6 +54,7 @@ class FilterComponent extends Component {
   private $identifier;
   private $component;
   private $fields;
+  private $values;
 
   const TextFilterType = 0;
   const SelectFilterType = 1;
@@ -85,7 +86,11 @@ class FilterComponent extends Component {
       switch($field['type']){
         case FilterComponent::TextFilterType:
           $html .= "<label for='".$field['name']."'>".$field['label']."</label>";
-          $html .= "<input type='text' name='".$field['name']."' />";
+          $html .= "<input type='text' name='".$field['name']."' ";
+          if(isset($this->values[$field['name']])){
+            $html .= "value='".$this->values[$field['name']]."' ";
+          }
+          $html .= "/>";
         break;
         case FilterComponent::SelectFilterType:
         case FilterComponent::RadioFilterType:
@@ -106,6 +111,7 @@ class FilterComponent extends Component {
           $filter[$name] = null;
         }else{
           $filter[$name] = $value;
+          $this->values[$name] = $value;
         }
       }
       $this->getComponent()->filter($filter);
@@ -164,13 +170,13 @@ class AggregatedDocumentList extends ListComponent {
     $this->source = $source;
     $struct = new MatrixDataStructure();
     $struct->setYField("link");
-    $struct->setXField("date");
+    $struct->setXField("timestamp");
     $struct->setValueField("count");
     $struct->setMatrixLayout(MatrixDataStructure::YXLayout);
     $struct->setEmptyValue("0");
     $this->struct = $struct;
     $view = new TableView();
-    $view->setColumnLabelModifier(function($date){ return date("D d/M", $date); });
+    $view->setColumnLabelModifier(function($timestamp){ return date("D d/M", $timestamp); });
     $this->view = $view;
   }
 
@@ -194,6 +200,58 @@ class AggregatedDocumentList extends ListComponent {
     return array(
       array( "name" =>  "begin_date", "label" => "Begin timestamp", "type" => FilterComponent::TextFilterType),
       array( "name" =>  "end_date", "label" => "End timestamp", "type" => FilterComponent::TextFilterType)
+    );
+  }
+}
+
+class DocumentBubbleGoogleMatrix extends ListComponent {
+  
+  public function __construct($dbh){
+    $this->source = new LAProxyDataSource($dbh);
+    $struct = new RowDataStructure();
+    $struct->setHeaderRow(array("ID","Day","Document","Type","# Students"));
+    $struct->setRowModifier(function($row){
+      return array(
+        ("#".$row['count']),
+        intval(date("d", $row['timestamp'])),
+        intval($row['linkId']),
+        "Link",
+        intval($row['count'])
+      );
+    });
+    $this->struct = $struct;
+    $this->view = new JSONView();
+  }
+
+  public function display(){
+    //$source->filterByDate(0,1343797200);
+    if($this->debug){
+      $this->source->filterByUser(111);
+    }else{
+      if($this->isFiltered("users")){
+        $this->source->filterByUsers(explode(",", $this->getFilterValue("users")));
+      }
+    }
+    //$source->filterByUsers(range(2,148));
+    if(
+      $this->isFiltered("begin_date") ||
+      $this->isFiltered("end_date")
+    ){
+      $this->source->filterByDate(
+        ($this->isFiltered("begin_date")?$this->getFilterValue("begin_date"):0),
+        ($this->isFiltered("end_date")?$this->getFilterValue("end_date"):PHP_INT_MAX)
+      );
+    }
+    $data = $this->source->getAggregatedStats();
+    $this->struct->loadData($data);
+    return $this->view->display($this->struct->getStructure());
+  }
+  
+  protected function getFilterFields(){
+    return array(
+      array( "name" =>  "begin_date", "label" => "Begin timestamp", "type" => FilterComponent::TextFilterType),
+      array( "name" =>  "end_date", "label" => "End timestamp", "type" => FilterComponent::TextFilterType),
+      array( "name" =>  "users", "label" => "Users", "type" => FilterComponent::TextFilterType)
     );
   }
 }

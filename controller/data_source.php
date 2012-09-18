@@ -239,8 +239,10 @@ class LAProxyDataSource extends MySQLiDataSource {
     $this->clearSelections();
     $this->clearGroupings();
     $this->select(array(
-      "UNIX_TIMESTAMP(FROM_UNIXTIME(`stats`.`timestamp`,'%Y-%m-%d 00:00:00'))"=>"`date`",
+      "UNIX_TIMESTAMP(FROM_UNIXTIME(`stats`.`timestamp`,'%Y-%m-%d 00:00:00'))"=>"`timestamp`",
+      "FROM_UNIXTIME(`stats`.`timestamp`,'%Y-%m-%d')"=>"`date`",
       "`links`.`title`"=>"`link`",
+      "`links`.`id`"=>"`linkId`",
       "COUNT(DISTINCT `user`, FROM_UNIXTIME(`timestamp` , '%d-%m-%Y'))"=>"`count`"
     ));
     $this->group("`links`.`id`");

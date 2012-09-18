@@ -7,6 +7,7 @@ abstract class DataStructure {
   abstract public function is_empty();
 }
 
+
 class MatrixDataStructure extends DataStructure {
   const XYLayout = 0;
   const YXLayout = 1;
@@ -123,6 +124,55 @@ class MatrixDataStructure extends DataStructure {
     $this->y_field = null;
     $this->value_field = null;
     $this->matrix = null;
+  }
+}
+
+class RowDataStructure extends DataStructure {
+  private $matrix = null;
+  private $rmod = null;
+  private $header = null;
+
+  public function setRowModifier($mod){
+    $this->rmod = $mod;
+  }
+
+  public function setHeaderRow($row){
+    $this->header = $row;
+  }
+  
+  public function loadData($data){
+    $this->matrix = $this->extractMatrix($data);
+    return $this->matrix;
+  }
+
+  protected function extractMatrix($data){
+    $rmod = $this->rmod;
+    $matrix = array();
+    if($this->header != null){
+      $matrix[] = $this->header;
+    }
+    if($rmod == null){
+      $matrix = $data;
+    }else{
+      foreach($data as $row){
+        $matrix[] = $rmod($row);
+      }
+    }
+    return $matrix;
+  }
+
+  public function getStructure(){
+    return $this->matrix;
+  }
+  
+  public function is_empty(){
+    return ($this->matrix == null);
+  }
+
+  public function clear(){
+    $this->matrix = null;
+    $this->rmod = null;
+    $this->header = null;
   }
 }
 ?>
