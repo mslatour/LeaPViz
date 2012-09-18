@@ -204,22 +204,11 @@ class AggregatedDocumentList extends ListComponent {
   }
 }
 
-class DocumentBubbleGoogleMatrix extends ListComponent {
+class GoogleGraphMatrix extends ListComponent {
   
   public function __construct($dbh){
     $this->source = new LAProxyDataSource($dbh);
-    $struct = new RowDataStructure();
-    $struct->setHeaderRow(array("ID","Day","Document","Type","# Students"));
-    $struct->setRowModifier(function($row){
-      return array(
-        ("#".$row['count']),
-        intval(date("d", $row['timestamp'])),
-        intval($row['linkId']),
-        "Link",
-        intval($row['count'])
-      );
-    });
-    $this->struct = $struct;
+    $this->struct = new RowDataStructure();
     $this->view = new JSONView();
   }
 
