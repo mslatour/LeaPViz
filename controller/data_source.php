@@ -235,7 +235,7 @@ class LAProxyDataSource extends MySQLiDataSource {
     );
   }
 
-  public function getAggregatedStats(){
+  public function getAggregatedResourceStats(){
     $this->clearSelections();
     $this->clearGroupings();
     $this->select(array(
@@ -256,6 +256,26 @@ class LAProxyDataSource extends MySQLiDataSource {
       ")"
     );
   }
+  
+  public function getAggregatedUserStats(){
+    $this->clearSelections();
+    $this->clearGroupings();
+    $this->select(array(
+      "UNIX_TIMESTAMP(FROM_UNIXTIME(`stats`.`timestamp`,'%Y-%m-%d 00:00:00'))"=>"`timestamp`",
+      "FROM_UNIXTIME(`stats`.`timestamp`,'%Y-%m-%d')"=>"`date`",
+      "`stats`.`user`"=>"`user`",
+      "COUNT(DISTINCT `link`, FROM_UNIXTIME(`timestamp` , '%d-%m-%Y'))"=>"`count`"
+    ));
+    $this->group("`stats`.`user`");
+    $this->group("`date`");
+    return $this->fetchAll(
+      "(".
+        "`stats` ".
+        "LEFT JOIN `links` ".
+        "ON `stats`.`link` = `links`.`url`".
+      ")"
+    );
+  }
 
   public function filterByUser($user){
     $this->filterByFieldValue("user","=",$user,"int");
@@ -264,7 +284,7 @@ class LAProxyDataSource extends MySQLiDataSource {
   public function filterByUsers($users){
     $this->filterByFieldValue("user","IN",$users,"list");
   }
-
+  
   public function filterByDate($from, $till){
     $this->filterByFieldBetweenValues("timestamp",$from,$till, "int");
   }

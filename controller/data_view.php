@@ -39,6 +39,8 @@ abstract class GoogleGraphView extends DataView {
   private $maxVAxis = 100;
   private $hStepsize = 10;
   private $maxHAxis = 100;
+  private $vAxisTitle = "";
+  private $hAxisTitle = "";
 
   public function setVStepSize($stepsize){
     $this->vStepsize = $stepsize;
@@ -70,6 +72,22 @@ abstract class GoogleGraphView extends DataView {
 
   protected function getMaxHAxis(){
     return $this->maxHAxis;
+  }
+
+  public function setVAxisTitle($title){
+    $this->vAxisTitle = $title;
+  }
+
+  protected function getVAxisTitle(){
+    return $this->vAxisTitle;
+  }
+  
+  public function setHAxisTitle($title){
+    return $this->hAxisTitle = $title;
+  }
+  
+  protected function getHAxisTitle(){
+    return $this->hAxisTitle;
   }
 }
 
@@ -199,7 +217,9 @@ class BubbleGraphView extends GoogleGraphView {
     $vStepsize = $this->getVStepSize();
     $maxVAxis = $this->getMaxVAxis();
     $hStepsize = $this->getHStepSize();
-    $maxHAxis =$this->getMaxHAxis();
+    $maxHAxis = $this->getMaxHAxis();
+    $vAxisTitle = $this->getVAxisTitle();
+    $hAxisTitle = $this->getHAxisTitle();
     $gridlinesHAxis = ($maxHAxis/$hStepsize)+1;
     $gridlinesVAxis = ($maxVAxis/$vStepsize)+1;
     $unique_id = "bubble_chart".time().rand();
@@ -214,13 +234,13 @@ class BubbleGraphView extends GoogleGraphView {
 
           var options = {
             hAxis: {
-              title: 'Day of month',
+              title: '$hAxisTitle',
               minValue: 0,
               maxValue: $maxHAxis,
               gridlines: {count: $gridlinesHAxis}
             },
             vAxis: {
-              title: 'Resource',
+              title: '$vAxisTitle',
               direction: -1,
               minValue: 0,
               maxValue: $maxVAxis,

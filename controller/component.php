@@ -224,6 +224,8 @@ class ResourceTimeGraph extends ListComponent {
     $this->source = new LAProxyDataSource($dbh);
     $this->struct = new RowDataStructure();
     $this->view = new BubbleGraphView();
+    $this->view->setVAxisTitle("Resource");
+    $this->view->setHAxisTitle("Day of month");
   }
 
   public function display(){
@@ -239,7 +241,7 @@ class ResourceTimeGraph extends ListComponent {
         ($this->isFiltered("end_date")?$this->getFilterValue("end_date"):PHP_INT_MAX)
       );
     }
-    $data = $this->source->getAggregatedStats();
+    $data = $this->source->getAggregatedResourceStats();
     $this->struct->loadData($data);
     return $this->view->display($this->struct);
   }
@@ -249,6 +251,43 @@ class ResourceTimeGraph extends ListComponent {
       array( "name" =>  "begin_date", "label" => "Begin timestamp", "type" => FilterComponent::TextFilterType),
       array( "name" =>  "end_date", "label" => "End timestamp", "type" => FilterComponent::TextFilterType),
       array( "name" =>  "users", "label" => "Users", "type" => FilterComponent::TextFilterType)
+    );
+  }
+}
+
+class UserTimeGraph extends ListComponent {
+  
+  public function __construct($dbh){
+    $this->source = new LAProxyDataSource($dbh);
+    $this->struct = new RowDataStructure();
+    $this->view = new BubbleGraphView();
+    $this->view->setVAxisTitle("Student");
+    $this->view->setHAxisTitle("Day of month");
+  }
+
+  public function display(){
+    if($this->isFiltered("resources")){
+      //$this->source->filterByResources(explode(",", $this->getFilterValue("resources")));
+    }
+    if(
+      $this->isFiltered("begin_date") ||
+      $this->isFiltered("end_date")
+    ){
+      $this->source->filterByDate(
+        ($this->isFiltered("begin_date")?$this->getFilterValue("begin_date"):0),
+        ($this->isFiltered("end_date")?$this->getFilterValue("end_date"):PHP_INT_MAX)
+      );
+    }
+    $data = $this->source->getAggregatedUserStats();
+    $this->struct->loadData($data);
+    return $this->view->display($this->struct);
+  }
+  
+  protected function getFilterFields(){
+    return array(
+      array( "name" =>  "begin_date", "label" => "Begin timestamp", "type" => FilterComponent::TextFilterType),
+      array( "name" =>  "end_date", "label" => "End timestamp", "type" => FilterComponent::TextFilterType),
+      array( "name" =>  "resources", "label" => "Resources", "type" => FilterComponent::TextFilterType)
     );
   }
 }

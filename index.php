@@ -15,5 +15,6 @@ $db = new MySQLiHandler(
 );
 
 //include("view/list.php");
-include("view/resource_time_graph_view.php");
+//include("view/resource_time_graph_view.php");
+include("view/user_time_graph_view.php");
 ?>
