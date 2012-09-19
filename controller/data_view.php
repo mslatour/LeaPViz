@@ -224,6 +224,7 @@ class BubbleGraphView extends GoogleGraphView {
               minorGridlines: {count: 1}
             },
             sizeAxis : {maxValue: 148},
+            legend: {position: 'top'},
             chartArea: {width: '90%', height: '90%'},
             bubble: {textStyle: {fontSize: 11}}
 
