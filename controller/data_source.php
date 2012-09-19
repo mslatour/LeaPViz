@@ -280,9 +280,17 @@ class LAProxyDataSource extends MySQLiDataSource {
   public function filterByUser($user){
     $this->filterByFieldValue("user","=",$user,"int");
   }
-
+  
   public function filterByUsers($users){
     $this->filterByFieldValue("user","IN",$users,"list");
+  }
+  
+  public function filterByResource($resource){
+    $this->filterByFieldValue("linkId","=",$resource,"int");
+  }
+  
+  public function filterByResources($resources){
+    $this->filterByFieldValue("linkId","IN",$resources,"list");
   }
   
   public function filterByDate($from, $till){

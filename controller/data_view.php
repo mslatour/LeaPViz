@@ -31,7 +31,24 @@ abstract class HtmlDataView extends DataView {
 }
 
 abstract class GoogleTableView extends DataView {
+  private $columns;
 
+  public function setColumns($columns){
+    $this->columns = $columns;
+  }
+
+  protected function getColumns(){
+    return $this->columns;
+  }
+
+  protected function getColumnString(){
+    $columns = $this->getColumns();
+    $columnstr = "";
+    foreach($columns as $column=>$type){
+      $columnstr .= "data.addColumn('$type', '$column');";
+    }
+    return $columnstr;
+  }
 }
 
 abstract class GoogleGraphView extends DataView {
@@ -249,7 +266,7 @@ class BubbleGraphView extends GoogleGraphView {
             },
             sizeAxis : {maxValue: 148},
             legend: {position: 'top'},
-            chartArea: {width: '90%', height: '90%'},
+            chartArea: {width: '90%', height: '90%',  top: 40},
             bubble: {textStyle: {fontSize: 11}}
 
           };
@@ -277,14 +294,6 @@ class GTableView extends GoogleTableView {
 
   }
 
-  protected function getColumnString(){
-    $columns = array('Id'=>'number', 'Title'=>'string', 'Type'=>'string');
-    $columnstr = "";
-    foreach($columns as $column=>$type){
-      $columnstr .= "data.addColumn('$type', '$column');";
-    }
-    return $columnstr;
-  }
 
   public function display2DMatrix($matrix){
     $inner_view = new JSONView();

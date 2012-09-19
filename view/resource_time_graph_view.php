@@ -30,14 +30,17 @@ if(isset($_POST)){
   $resource_time_filter->process();
 }
 
+$tabs = new TabbedContainer();
+$tabs->addComponent($resource_time_graph, 'Graph');
+$tabs->addComponent($resource_time_filter, 'Filter');
+$tabs->addComponent($resource_list, 'Resources list');
+
 ?>
 <html>
   <head>
     <script type="text/javascript" src="https://www.google.com/jsapi"></script>
   </head>
   <body>
-    <?php echo $resource_time_filter->display(); ?>
-    <?php echo $resource_time_graph->display(); ?>
-    <?php echo $resource_list->display(); ?>
+    <?php echo $tabs->display(); ?>
   </body>
 </html>

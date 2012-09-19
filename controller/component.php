@@ -80,19 +80,42 @@ class FilterComponent extends Component {
 
   public function display(){
     $fields = $this->getFilterFields();
-    $html = "<form method='post'>";
-    $html .= "<input type='hidden' name='filter' value='".$this->getIdentifier()."' />";
+    $html = "<form method='post'>\n";
+    $html .= "<input type='hidden' name='filter' value='".$this->getIdentifier()."' />\n";
     foreach($fields as $field){
       switch($field['type']){
         case FilterComponent::TextFilterType:
-          $html .= "<label for='".$field['name']."'>".$field['label']."</label>";
+          $html .= "<label for='".$field['name']."'>".$field['label']."</label>\n";
           $html .= "<input type='text' name='".$field['name']."' ";
           if(isset($this->values[$field['name']])){
             $html .= "value='".$this->values[$field['name']]."' ";
           }
-          $html .= "/>";
+          $html .= "/>\n";
         break;
         case FilterComponent::SelectFilterType:
+          if(isset($field['multiple']) && $field['multiple'] == true){
+            $html .= "<select name='".$field['name']."[]' multiple='multiple'";
+          }else{
+            $html .= "<select name='".$field['name']."'>\n";
+          }
+          foreach($field['options'] as $id=>$value){
+            if(
+              isset($this->values[$field['name']]) &&
+              (
+                (
+                  is_array($this->values[$field['name']]) &&
+                  in_array($id, $this->values[$field['name']])
+                )
+              ||
+                $this->values[$field['name']] == $value
+              )
+            ){
+              $html .= "<option value='$id' selected='selected'>$value</option>\n";
+            }else{
+              $html .= "<option value='$id'>$value</option>\n";
+            }
+          }
+          $html .= "</select>";
         case FilterComponent::RadioFilterType:
         break;
       }
@@ -107,6 +130,7 @@ class FilterComponent extends Component {
       $filter = array();
       foreach($_POST as $name=>$value){
         if($name == "filter") continue;
+        if(substr($name, -2) == "[]") $name = substr($name, 0, -2);
         if($value == ""){
           $filter[$name] = null;
         }else{
@@ -209,10 +233,37 @@ class ResourceList extends ListComponent {
     $this->source = new LAProxyDataSource($dbh);
     $this->struct = new RowDataStructure();
     $this->view = new GTableView();
+    $this->view->setColumns(array(
+      'Id'=>'number', 
+      'Title'=>'string', 
+      'Type'=>'string')
+    );
   }
 
   public function display(){
     $data = $this->source->getLinks();
+    $this->struct->loadData($data);
+    return $this->view->display($this->struct->getStructure());
+  }
+}
+
+class UserList extends ListComponent {
+  public function __construct($dbh){
+    $this->source = new LAProxyDataSource($dbh);
+    $this->struct = new RowDataStructure();
+    $this->view = new GTableView();
+    $this->view->setColumns(array(
+      'Id'=>'number', 
+      'Username'=>'string', 
+      'Firstname'=>'string',
+      'Surname'=>'string',
+      'Student'=>'boolean'
+      )
+    );
+  }
+
+  public function display(){
+    $data = $this->source->getUsers();
     $this->struct->loadData($data);
     return $this->view->display($this->struct->getStructure());
   }
@@ -230,7 +281,11 @@ class ResourceTimeGraph extends ListComponent {
 
   public function display(){
     if($this->isFiltered("users")){
-      $this->source->filterByUsers(explode(",", $this->getFilterValue("users")));
+      if(is_array($this->getFilterValue("users"))){
+        $this->source->filterByUsers($this->getFilterValue("users"));
+      }else{
+        $this->source->filterByUsers(explode(",", $this->getFilterValue("users")));
+      }
     }
     if(
       $this->isFiltered("begin_date") ||
@@ -247,10 +302,29 @@ class ResourceTimeGraph extends ListComponent {
   }
   
   protected function getFilterFields(){
+    $users = $this->source->getUsers();
+    $user_options = array();
+    foreach($users as $user){
+      $user_options[$user['id']] = $user['surname'].", ".$user['firstname']." (".$user['username'].")";
+    }
     return array(
-      array( "name" =>  "begin_date", "label" => "Begin timestamp", "type" => FilterComponent::TextFilterType),
-      array( "name" =>  "end_date", "label" => "End timestamp", "type" => FilterComponent::TextFilterType),
-      array( "name" =>  "users", "label" => "Users", "type" => FilterComponent::TextFilterType)
+      array( 
+        "name" => "begin_date", 
+        "label" => "Begin timestamp", 
+        "type" => FilterComponent::TextFilterType
+      ),
+      array(
+        "name" => "end_date", 
+        "label" => "End timestamp", 
+        "type" => FilterComponent::TextFilterType
+      ),
+      array(
+        "name" => "users", 
+        "label" => "Users",
+        "type" => FilterComponent::SelectFilterType,
+        "options" => $user_options,
+        "multiple" => true
+      )
     );
   }
 }
@@ -267,7 +341,11 @@ class UserTimeGraph extends ListComponent {
 
   public function display(){
     if($this->isFiltered("resources")){
-      //$this->source->filterByResources(explode(",", $this->getFilterValue("resources")));
+      if(is_array($this->getFilterValue("resources"))){
+        $this->source->filterByResources($this->getFilterValue("resources"));
+      }else{
+        $this->source->filterByResources(explode(",", $this->getFilterValue("resources")));
+      }
     }
     if(
       $this->isFiltered("begin_date") ||
@@ -284,10 +362,29 @@ class UserTimeGraph extends ListComponent {
   }
   
   protected function getFilterFields(){
+    $resources = $this->source->getLinks();
+    $resource_options = array();
+    foreach($resources as $resource){
+      $resource_options[$resource['id']] = $resource['title'];
+    }
     return array(
-      array( "name" =>  "begin_date", "label" => "Begin timestamp", "type" => FilterComponent::TextFilterType),
-      array( "name" =>  "end_date", "label" => "End timestamp", "type" => FilterComponent::TextFilterType),
-      array( "name" =>  "resources", "label" => "Resources", "type" => FilterComponent::TextFilterType)
+      array( 
+        "name" => "begin_date", 
+        "label" => "Begin timestamp", 
+        "type" => FilterComponent::TextFilterType
+      ),
+      array(
+        "name" => "end_date", 
+        "label" => "End timestamp", 
+        "type" => FilterComponent::TextFilterType
+      ),
+      array(
+        "name" => "resources", 
+        "label" => "Resources",
+        "type" => FilterComponent::SelectFilterType,
+        "options" => $resource_options,
+        "multiple" => true
+      )
     );
   }
 }

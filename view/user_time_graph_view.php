@@ -1,10 +1,12 @@
 <?php
-$resource_list = new ResourceList($db);
-$resource_list->getStruct()->setRowModifier(function($row){
+$user_list = new UserList($db);
+$user_list->getStruct()->setRowModifier(function($row){
   return array(
     "Id"=>intval($row['id']),
-    "Title"=>$row['title'],
-    "Type"=>$row['type']
+    "Username"=>$row['username'],
+    "Firstname"=>$row['firstname'],
+    "Surname"=>$row['surname'],
+    "Student"=>($row['student']==1)
   );
 });
 
@@ -30,14 +32,17 @@ if(isset($_POST)){
   $user_time_filter->process();
 }
 
+$tabs = new TabbedContainer();
+$tabs->addComponent($user_time_graph, 'Graph');
+$tabs->addComponent($user_time_filter, 'Filter');
+$tabs->addComponent($user_list, 'Users list');
+
 ?>
 <html>
   <head>
     <script type="text/javascript" src="https://www.google.com/jsapi"></script>
   </head>
   <body>
-    <?php echo $user_time_filter->display(); ?>
-    <?php echo $user_time_graph->display(); ?>
-    <?php //echo $resource_list->display(); ?>
+    <?php echo $tabs->display(); ?>
   </body>
 </html>
