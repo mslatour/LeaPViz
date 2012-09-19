@@ -204,24 +204,32 @@ class AggregatedDocumentList extends ListComponent {
   }
 }
 
-class GoogleGraphMatrix extends ListComponent {
+class ResourceList extends ListComponent {
+  public function __construct($dbh){
+    $this->source = new LAProxyDataSource($dbh);
+    $this->struct = new RowDataStructure();
+    $this->view = new TableView();
+  }
+
+  public function display(){
+    $data = $this->source->getLinks();
+    $this->struct->loadData($data);
+    return $this->view->display($this->struct->getStructure());
+  }
+}
+
+class ResourceTimeGraph extends ListComponent {
   
   public function __construct($dbh){
     $this->source = new LAProxyDataSource($dbh);
     $this->struct = new RowDataStructure();
-    $this->view = new JSONView();
+    $this->view = new BubbleGraphView();
   }
 
   public function display(){
-    //$source->filterByDate(0,1343797200);
-    if($this->debug){
-      $this->source->filterByUser(111);
-    }else{
-      if($this->isFiltered("users")){
-        $this->source->filterByUsers(explode(",", $this->getFilterValue("users")));
-      }
+    if($this->isFiltered("users")){
+      $this->source->filterByUsers(explode(",", $this->getFilterValue("users")));
     }
-    //$source->filterByUsers(range(2,148));
     if(
       $this->isFiltered("begin_date") ||
       $this->isFiltered("end_date")
@@ -233,7 +241,7 @@ class GoogleGraphMatrix extends ListComponent {
     }
     $data = $this->source->getAggregatedStats();
     $this->struct->loadData($data);
-    return $this->view->display($this->struct->getStructure());
+    return $this->view->display($this->struct);
   }
   
   protected function getFilterFields(){
@@ -244,4 +252,5 @@ class GoogleGraphMatrix extends ListComponent {
     );
   }
 }
+
 ?>

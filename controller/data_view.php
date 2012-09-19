@@ -30,6 +30,45 @@ abstract class HtmlDataView extends DataView {
   }
 }
 
+abstract class GoogleGraphView extends DataView {
+  private $vStepsize = 10;
+  private $maxVAxis = 100;
+  private $hStepsize = 10;
+  private $maxHAxis = 100;
+
+  public function setVStepSize($stepsize){
+    $this->vStepsize = $stepsize;
+  }
+
+  protected function getVStepSize(){
+    return $this->vStepsize;
+  }
+
+  public function setHStepSize($stepsize){
+    $this->hStepsize = $stepsize;
+  }
+
+  protected function getHStepSize(){
+    return $this->hStepsize;
+  }
+
+  public function setMaxVAxis($max){
+    $this->maxVAxis = $max;
+  }
+
+  protected function getMaxVAxis(){
+    return $this->maxVAxis;
+  }
+
+  public function setMaxHAxis($max){
+    $this->maxHAxis = $max;
+  }
+
+  protected function getMaxHAxis(){
+    return $this->maxHAxis;
+  }
+}
+
 class JSONView extends DataView {
 
   protected function displayStructure($struct){
@@ -136,5 +175,68 @@ class TableView extends HtmlDataView {
   }
 }
 
+
+class BubbleGraphView extends GoogleGraphView {
+  public function displayStructure($struct){
+    if($struct instanceof RowDataStructure){
+      if(!$struct->is_empty()){
+        $matrix = $struct->getStructure();
+        return $this->display2DMatrix($matrix);
+      }
+    }else{
+      return false;
+    }
+
+  }
+
+  public function display2DMatrix($matrix){
+    $inner_view = new JSONView();
+    $google_matrix = $inner_view->display($matrix);
+    $vStepsize = $this->getVStepSize();
+    $maxVAxis = $this->getMaxVAxis();
+    $hStepsize = $this->getHStepSize();
+    $maxHAxis =$this->getMaxHAxis();
+    $gridlinesHAxis = ($maxHAxis/$hStepsize)+1;
+    $gridlinesVAxis = ($maxVAxis/$vStepsize)+1;
+    $unique_id = "bubble_chart".time().(1000*rand());
+    $html = <<<EOT
+      <script type="text/javascript">
+        google.load("visualization", "1", {packages:["corechart"]});
+        google.setOnLoadCallback(drawChart);
+        function drawChart() {
+          var data = google.visualization.arrayToDataTable(
+            $google_matrix
+          );
+
+          var options = {
+            hAxis: {
+              title: 'Day of month',
+              minValue: 0,
+              maxValue: $maxHAxis,
+              gridlines: {count: $gridlinesHAxis}
+            },
+            vAxis: {
+              title: 'Resource',
+              direction: -1,
+              minValue: 0,
+              maxValue: $maxVAxis,
+              gridlines: {count: $gridlinesVAxis},
+              minorGridlines: {count: 1}
+            },
+            sizeAxis : {maxValue: 148},
+            chartArea: {width: '90%', height: '90%'},
+            bubble: {textStyle: {fontSize: 11}}
+
+          };
+
+          var chart = new google.visualization.BubbleChart(document.getElementById('$unique_id'));
+          chart.draw(data, options);
+        }
+      </script>
+      <div id="$unique_id" style="width: 1200px; height: 2000px;"></div>
+EOT;
+    return $html;
+  }
+}
 
 ?>

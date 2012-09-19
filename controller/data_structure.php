@@ -139,6 +139,14 @@ class RowDataStructure extends DataStructure {
   public function setHeaderRow($row){
     $this->header = $row;
   }
+
+  public function getRowCount(){
+    if($this->matrix != null){
+      return sizeof($this->matrix);
+    }else{
+      return 0;
+    }
+  }
   
   public function loadData($data){
     $this->matrix = $this->extractMatrix($data);

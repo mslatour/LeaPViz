@@ -1,49 +1,43 @@
 <?php
-$doc_bubble_matrix = new GoogleGraphMatrix($db);
-$doc_bubble_matrix->getStruct()->setHeaderRow(array("ID","Day","Document","Type","# Students"));
-$doc_bubble_matrix->getStruct()->setRowModifier(function($row){
+$resource_list = new ResourceList($db);
+$resource_list->getStruct()->setRowModifier(function($row){
   return array(
-    ("#".$row['count']),
+    "Id"=>$row['id'],
+    "Title"=>$row['title'],
+    "Type"=>$row['type']
+  );
+});
+
+$resource_time_graph = new ResourceTimeGraph($db);
+$resource_time_graph->getView()->setVStepsize(2);
+$resource_time_graph->getView()->setMaxVAxis(120);
+$resource_time_graph->getView()->setHStepsize(1);
+$resource_time_graph->getView()->setMaxHAxis(32);
+$resource_time_graph->getStruct()->setHeaderRow(array("ID","Day","Resource","Type","# Students"));
+$resource_time_graph->getStruct()->setRowModifier(function($row){
+  return array(
+    "",
     intval(date("d", $row['timestamp'])),
     intval($row['linkId']),
-    "Link",
+    $row['linkType'],
     intval($row['count'])
   );
 });
-//$doc_bubble_matrix->debug();
 
-$bubble_filter = $doc_bubble_matrix->getFilterComponent('bubble_filter');
+$resource_time_filter = $resource_time_graph->getFilterComponent('resource_time_filter');
 
 if(isset($_POST)){
-  $bubble_filter->process();
+  $resource_time_filter->process();
 }
+
 ?>
 <html>
   <head>
     <script type="text/javascript" src="https://www.google.com/jsapi"></script>
-    <script type="text/javascript">
-      google.load("visualization", "1", {packages:["corechart"]});
-      google.setOnLoadCallback(drawChart);
-      function drawChart() {
-        var data = google.visualization.arrayToDataTable(
-          <?php echo $doc_bubble_matrix->display(); ?>
-        );
-
-        var options = {
-          title: 'Correlation between life expectancy, fertility rate and population of some world countries (2010)',
-          hAxis: {title: 'Day'},
-          vAxis: {title: 'Document'},
-          chartArea: {left: 100, top: 10 },
-          bubble: {textStyle: {fontSize: 11}}
-        };
-
-        var chart = new google.visualization.BubbleChart(document.getElementById('chart_div'));
-        chart.draw(data, options);
-      }
-    </script>
   </head>
   <body>
-    <?php echo $bubble_filter->display(); ?>
-    <div id="chart_div" style="width: 1800px; height: 1000px;"></div>
+    <?php echo $resource_time_filter->display(); ?>
+    <?php echo $resource_time_graph->display(); ?>
+    <?php echo $resource_list->display(); ?>
   </body>
 </html>
