@@ -82,6 +82,7 @@ class FilterComponent extends Component {
     $fields = $this->getFilterFields();
     $html = "<form method='post'>\n";
     $html .= "<input type='hidden' name='filter' value='".$this->getIdentifier()."' />\n";
+    $html .= "<input type='submit' value='Filter!' />";
     foreach($fields as $field){
       switch($field['type']){
         case FilterComponent::TextFilterType:
@@ -93,8 +94,10 @@ class FilterComponent extends Component {
           $html .= "/>\n";
         break;
         case FilterComponent::SelectFilterType:
+          $html .= "<label for='".$field['name']."'>".$field['label']."</label>\n";
           if(isset($field['multiple']) && $field['multiple'] == true){
-            $html .= "<select name='".$field['name']."[]' multiple='multiple'";
+            $html .= "<select name='".$field['name']."[]' multiple='multiple' "
+              ."style='height: ".(30+sizeof($field['options'])*10)."px;'>";
           }else{
             $html .= "<select name='".$field['name']."'>\n";
           }
@@ -120,7 +123,6 @@ class FilterComponent extends Component {
         break;
       }
     }
-    $html .= "<input type='submit' value='Submit!' />";
     $html .= "</form>";
     return $html;
   }

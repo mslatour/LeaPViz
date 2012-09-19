@@ -41,6 +41,7 @@ $tabs->addComponent($user_list, 'Users list');
 <html>
   <head>
     <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <link rel='stylesheet' type='text/css' href='style/main.css' />
   </head>
   <body>
     <?php echo $tabs->display(); ?>

@@ -38,6 +38,7 @@ $tabs->addComponent($resource_list, 'Resources list');
 ?>
 <html>
   <head>
+    <link rel='stylesheet' type='text/css' href='style/main.css' />
     <script type="text/javascript" src="https://www.google.com/jsapi"></script>
   </head>
   <body>
