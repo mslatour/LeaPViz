@@ -208,7 +208,7 @@ class ResourceList extends ListComponent {
   public function __construct($dbh){
     $this->source = new LAProxyDataSource($dbh);
     $this->struct = new RowDataStructure();
-    $this->view = new TableView();
+    $this->view = new GTableView();
   }
 
   public function display(){

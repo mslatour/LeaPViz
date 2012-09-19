@@ -30,6 +30,10 @@ abstract class HtmlDataView extends DataView {
   }
 }
 
+abstract class GoogleTableView extends DataView {
+
+}
+
 abstract class GoogleGraphView extends DataView {
   private $vStepsize = 10;
   private $maxVAxis = 100;
@@ -198,12 +202,12 @@ class BubbleGraphView extends GoogleGraphView {
     $maxHAxis =$this->getMaxHAxis();
     $gridlinesHAxis = ($maxHAxis/$hStepsize)+1;
     $gridlinesVAxis = ($maxVAxis/$vStepsize)+1;
-    $unique_id = "bubble_chart".time().(1000*rand());
+    $unique_id = "bubble_chart".time().rand();
     $html = <<<EOT
       <script type="text/javascript">
         google.load("visualization", "1", {packages:["corechart"]});
-        google.setOnLoadCallback(drawChart);
-        function drawChart() {
+        google.setOnLoadCallback(drawChart_$unique_id);
+        function drawChart_$unique_id() {
           var data = google.visualization.arrayToDataTable(
             $google_matrix
           );
@@ -240,4 +244,51 @@ EOT;
   }
 }
 
+class GTableView extends GoogleTableView {
+  public function displayStructure($struct){
+    if($struct instanceof RowDataStructure){
+      if(!$struct->is_empty()){
+        $matrix = $struct->getStructure();
+        return $this->display2DMatrix($matrix);
+      }
+    }else{
+      return false;
+    }
+
+  }
+
+  protected function getColumnString(){
+    $columns = array('Id'=>'number', 'Title'=>'string', 'Type'=>'string');
+    $columnstr = "";
+    foreach($columns as $column=>$type){
+      $columnstr .= "data.addColumn('$type', '$column');";
+    }
+    return $columnstr;
+  }
+
+  public function display2DMatrix($matrix){
+    $inner_view = new JSONView();
+    $google_matrix = $inner_view->display($matrix);
+    $unique_id = "table_chart".time().rand();
+    $columnstr = $this->getColumnString();
+    $html = <<<EOT
+      <script type="text/javascript">
+        google.load("visualization", "1", {packages:["table"]});
+        google.setOnLoadCallback(drawTable_$unique_id);
+        function drawTable_$unique_id() {
+          var data = new google.visualization.DataTable();
+          $columnstr
+          data.addRows(
+            $google_matrix
+          );
+
+           var table = new google.visualization.Table(document.getElementById('$unique_id'));
+          table.draw(data, {showRowNumber: false});
+        }
+      </script>
+      <div id="$unique_id"></div>
+EOT;
+    return $html;
+  }
+}
 ?>

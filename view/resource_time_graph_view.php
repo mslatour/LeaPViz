@@ -2,7 +2,7 @@
 $resource_list = new ResourceList($db);
 $resource_list->getStruct()->setRowModifier(function($row){
   return array(
-    "Id"=>$row['id'],
+    "Id"=>intval($row['id']),
     "Title"=>$row['title'],
     "Type"=>$row['type']
   );
