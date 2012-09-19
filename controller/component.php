@@ -82,7 +82,7 @@ class FilterComponent extends Component {
     $fields = $this->getFilterFields();
     $html = "<form method='post'>\n";
     $html .= "<input type='hidden' name='filter' value='".$this->getIdentifier()."' />\n";
-    $html .= "<input type='submit' value='Filter!' />";
+    $html .= "<input type='submit' value='Apply Filter!' />";
     foreach($fields as $field){
       switch($field['type']){
         case FilterComponent::TextFilterType:
@@ -110,7 +110,7 @@ class FilterComponent extends Component {
                   in_array($id, $this->values[$field['name']])
                 )
               ||
-                $this->values[$field['name']] == $value
+                $this->values[$field['name']] == $id
               )
             ){
               $html .= "<option value='$id' selected='selected'>$value</option>\n";
@@ -290,13 +290,10 @@ class ResourceTimeGraph extends ListComponent {
       }
     }
     if(
-      $this->isFiltered("begin_date") ||
-      $this->isFiltered("end_date")
+      $this->isFiltered("period")
     ){
-      $this->source->filterByDate(
-        ($this->isFiltered("begin_date")?$this->getFilterValue("begin_date"):0),
-        ($this->isFiltered("end_date")?$this->getFilterValue("end_date"):PHP_INT_MAX)
-      );
+      $period = explode("-", $this->getFilterValue("period"));
+      $this->source->filterByDate($period[0], $period[1]);
     }
     $data = $this->source->getAggregatedResourceStats();
     $this->struct->loadData($data);
@@ -311,14 +308,15 @@ class ResourceTimeGraph extends ListComponent {
     }
     return array(
       array( 
-        "name" => "begin_date", 
-        "label" => "Begin timestamp", 
-        "type" => FilterComponent::TextFilterType
-      ),
-      array(
-        "name" => "end_date", 
-        "label" => "End timestamp", 
-        "type" => FilterComponent::TextFilterType
+        "name" => "period", 
+        "label" => "Period",
+        "type" => FilterComponent::SelectFilterType,
+        "options" => array(
+          "" => "No filter",
+          "1335848400-1338526799" => "1/05 - 31/05",
+          "1338526800-1341118799" => "1/06 - 30/06",
+          "1341118800-1343797199" => "1/07 - 31/07"
+        )
       ),
       array(
         "name" => "users", 
@@ -350,13 +348,10 @@ class UserTimeGraph extends ListComponent {
       }
     }
     if(
-      $this->isFiltered("begin_date") ||
-      $this->isFiltered("end_date")
+      $this->isFiltered("period")
     ){
-      $this->source->filterByDate(
-        ($this->isFiltered("begin_date")?$this->getFilterValue("begin_date"):0),
-        ($this->isFiltered("end_date")?$this->getFilterValue("end_date"):PHP_INT_MAX)
-      );
+      $period = explode("-", $this->getFilterValue("period"));
+      $this->source->filterByDate($period[0], $period[1]);
     }
     $data = $this->source->getAggregatedUserStats();
     $this->struct->loadData($data);
@@ -371,14 +366,15 @@ class UserTimeGraph extends ListComponent {
     }
     return array(
       array( 
-        "name" => "begin_date", 
-        "label" => "Begin timestamp", 
-        "type" => FilterComponent::TextFilterType
-      ),
-      array(
-        "name" => "end_date", 
-        "label" => "End timestamp", 
-        "type" => FilterComponent::TextFilterType
+        "name" => "period", 
+        "label" => "Period",
+        "type" => FilterComponent::SelectFilterType,
+        "options" => array(
+          "" => "No filter",
+          "1335848400-1338526799" => "1/05 - 31/05",
+          "1338526800-1341118799" => "1/06 - 30/06",
+          "1341118800-1343797199" => "1/07 - 31/07"
+        )
       ),
       array(
         "name" => "resources", 

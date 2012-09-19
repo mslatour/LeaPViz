@@ -13,7 +13,7 @@ $resource_time_graph->getView()->setVStepsize(2);
 $resource_time_graph->getView()->setMaxVAxis(120);
 $resource_time_graph->getView()->setHStepsize(1);
 $resource_time_graph->getView()->setMaxHAxis(32);
-$resource_time_graph->getStruct()->setHeaderRow(array("ID","Day","Resource","Type","# Students"));
+$resource_time_graph->getStruct()->setHeaderRow(array("ID","Day","Resource","Type","# Users"));
 $resource_time_graph->getStruct()->setRowModifier(function($row){
   return array(
     "",
