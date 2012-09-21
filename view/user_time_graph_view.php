@@ -27,6 +27,7 @@ $user_time_graph->getStruct()->setRowModifier(function($row){
 });
 
 $user_time_filter = $user_time_graph->getFilterComponent('user_time_filter');
+$user_list->getSource()->setFilter($user_time_filter);
 
 if(isset($_POST)){
   $user_time_filter->process();

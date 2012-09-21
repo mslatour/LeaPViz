@@ -25,6 +25,7 @@ $resource_time_graph->getStruct()->setRowModifier(function($row){
 });
 
 $resource_time_filter = $resource_time_graph->getFilterComponent('resource_time_filter');
+$resource_list->getSource()->setFilter($resource_time_filter);
 
 if(isset($_POST)){
   $resource_time_filter->process();

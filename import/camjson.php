@@ -1,6 +1,7 @@
 <?php
-
-$deactivated = true;
+$deactivated = false;
+$file = "Fronter_20120920_1.json.9";
+$course = "VU_KNO_2012";
 
 include("../settings.php");
 include("../controller/dbh.php");
@@ -14,9 +15,8 @@ if(!$deactivated){
     $SETTING_DB_DATABASE
   );
 
-  $file = "Fronter_20120911_1.json";
   $data = json_decode(file_get_contents($file),true);
-
+  echo sizeof($data);
   $links = array();
   $stats = array();
   $users = array();
@@ -47,7 +47,7 @@ if(!$deactivated){
     $surname = array_pop($names);
     $firstname = implode(" ", $names);
     $users[$userId]['id'] = $db->insert("user",array(
-      "course"=>"VU",
+      "course"=>$course,
       "username"=>$user['username'],
       "password"=>$user['password'],
       "firstname"=>$firstname,
@@ -60,7 +60,7 @@ if(!$deactivated){
 
   foreach($links as $linkId=>$link){
     $links[$linkId]['id'] = $db->insert("links",array(
-      "course"=>"VU",
+      "course"=>$course,
       "url"=>$link['link'],
       "title"=>$link['link'],
       "type"=>"Web document"
@@ -73,7 +73,7 @@ if(!$deactivated){
   foreach($stats as $stat){
     if($i++ % 100 == 0) echo "$i stats imported<br />";
     $db->insert("stats", array(
-      "course"=>"VU",
+      "course"=>$course,
       "user"=>$users[$stat['user']]['id'],
       "link"=>$stat['link'],
       "linkId"=>$links[$stat['linkId']]['id'],

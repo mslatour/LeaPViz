@@ -7,6 +7,8 @@ abstract class DataSource {
   protected $groupings = array();
   protected $limit = null;
 
+  protected $filterComponent = null;
+
   abstract public function fetchAll($table);
 
   public function clear(){
@@ -31,18 +33,30 @@ abstract class DataSource {
     $this->selections = array();
   }
 
-  protected function filterByFieldValue($field, $op, $value, $type = "string"){
+  protected function applyFilterByFieldValue($field, $op, $value, $type = "string"){
     $this->filters[$this->escape($field,'field')] = array(
       "op" => $op, 
       "value" => $this->escape($value,$type)
     );
   }
   
-  protected function filterByFieldBetweenValues($field, $a, $b, $type){
+  protected function applyFilterByFieldBetweenValues($field, $a, $b, $type){
     $this->filters[$this->escape($field,'field')] = array(
       "op" => "BETWEEN", 
       "value" => $this->escape($a, $type)." AND ".$this->escape($b, $type)
     );
+  }
+
+  public function setFilter($filter){
+    $this->filterComponent = $filter;
+  }
+
+  protected function getFilter(){
+    if($this->filterComponent != null){
+      return $this->filterComponent;
+    }else{
+      return new FilterComponent('dummy',null,array());
+    }
   }
 
   protected function escape($value, $type = "string"){
@@ -56,7 +70,7 @@ abstract class DataSource {
         $value = floatval($value);
         break;
       case "field":
-        $value = '`'.$value.'`';
+        break;
       default:
       case "string":
         $value = '"'.$value.'"';
@@ -120,6 +134,9 @@ class MySQLiDataSource extends DataSource {
         $this->createLimitString()
       ));
       $db_result = $this->dbh->raw_query($this->query);
+      $this->clearSelections();
+      $this->clearGroupings();
+      $this->clearFilters();
       if($db_result){
         $result = array();
         while($row = $db_result->fetch_array(MYSQLI_ASSOC)){
@@ -152,7 +169,15 @@ class MySQLiDataSource extends DataSource {
         $value = "(".$str.")";
         break;
       case "field":
-        $value = '`'.$this->dbh->escape_string($value).'`';
+        if($value[0] != '`'){
+          if(strpos($value, '.') !== false){
+            $parts = explode('.', $value);
+            $value = $this->escape($parts[0], "field")."."
+              .$this->escape($parts[1], "field");
+          }else{
+            $value = '`'.$this->dbh->escape_string($value).'`';
+          }
+        }
         break;
       default:
       case "string":
@@ -209,23 +234,41 @@ class MySQLiDataSource extends DataSource {
 }
 
 class LAProxyDataSource extends MySQLiDataSource {
+  private $course = null;
 
   public function getUsers(){
+    if($this->getFilter()->isFiltered("course")){
+      $this->applyFilterByFieldValue("course", "=", $this->getFilter()->getValue("course"));
+    }
     return $this->fetchAll("user");
   }
 
   public function getLinks(){
+    if($this->getFilter()->isFiltered("course")){
+      $this->applyFilterByFieldValue("course", "=", $this->getFilter()->getValue("course"));
+    }
     return $this->fetchAll("links");
   }
 
   public function getStats(){
-    $this->clearSelections();
-    $this->clearGroupings();
     $this->select(array(
       "CONCAT(`user`.`surname`,', ',`user`.`firstname`,' (',`user`.`username`,')')"=>"`user`",
       "FROM_UNIXTIME(`stats`.`timestamp`,'%d-%m-%Y %H:%i:%s')"=>"`timestamp`",
       "`links`.`title`"=>"`link`"
     ));
+    if($this->getFilter()->isFiltered("course")){
+      $this->applyFilterByFieldValue("stats.course", "=", $this->getFilter()->getValue("course"));
+    }
+    if($this->getFilter()->isFiltered("users")){
+      $this->applyFilterByFieldValue("stats.user", "IN", $this->getFilter()->getValue("users"),"list");
+    }
+    if($this->getFilter()->isFiltered("resources")){
+      $this->applyFilterByFieldValue("links.id", "IN", $this->getFilter()->getValue("resources"),"list");
+    }
+    if($this->getFilter()->isFiltered("period")){
+      $date = explode("-", $this->getFilter()->getValue("period"));
+      $this->applyFilterByFieldBetweenValues("stats.timestamp",$date[0],$date[1], "int");
+    }
     return $this->fetchAll(
       "(".
         "`stats` ".
@@ -236,8 +279,6 @@ class LAProxyDataSource extends MySQLiDataSource {
   }
 
   public function getAggregatedResourceStats(){
-    $this->clearSelections();
-    $this->clearGroupings();
     $this->select(array(
       "UNIX_TIMESTAMP(FROM_UNIXTIME(`stats`.`timestamp`,'%Y-%m-%d 00:00:00'))"=>"`timestamp`",
       "FROM_UNIXTIME(`stats`.`timestamp`,'%Y-%m-%d')"=>"`date`",
@@ -248,6 +289,19 @@ class LAProxyDataSource extends MySQLiDataSource {
     ));
     $this->group("`links`.`id`");
     $this->group("`date`");
+    if($this->getFilter()->isFiltered("course")){
+      $this->applyFilterByFieldValue("stats.course", "=", $this->getFilter()->getValue("course"));
+    }
+    if($this->getFilter()->isFiltered("users")){
+      $this->applyFilterByFieldValue("stats.user", "IN", $this->getFilter()->getValue("users"),"list");
+    }
+    if($this->getFilter()->isFiltered("resources")){
+      $this->applyFilterByFieldValue("links.id", "IN", $this->getFilter()->getValue("resources"),"list");
+    }
+    if($this->getFilter()->isFiltered("period")){
+      $date = explode("-", $this->getFilter()->getValue("period"));
+      $this->applyFilterByFieldBetweenValues("stats.timestamp",$date[0],$date[1], "int");
+    }
     return $this->fetchAll(
       "(".
         "`stats` ".
@@ -258,8 +312,6 @@ class LAProxyDataSource extends MySQLiDataSource {
   }
   
   public function getAggregatedUserStats(){
-    $this->clearSelections();
-    $this->clearGroupings();
     $this->select(array(
       "UNIX_TIMESTAMP(FROM_UNIXTIME(`stats`.`timestamp`,'%Y-%m-%d 00:00:00'))"=>"`timestamp`",
       "FROM_UNIXTIME(`stats`.`timestamp`,'%Y-%m-%d')"=>"`date`",
@@ -268,6 +320,19 @@ class LAProxyDataSource extends MySQLiDataSource {
     ));
     $this->group("`stats`.`user`");
     $this->group("`date`");
+    if($this->getFilter()->isFiltered("course")){
+      $this->applyFilterByFieldValue("stats.course", "=", $this->getFilter()->getValue("course"));
+    }
+    if($this->getFilter()->isFiltered("users")){
+      $this->applyFilterByFieldValue("stats.user", "IN", $this->getFilter()->getValue("users"),"list");
+    }
+    if($this->getFilter()->isFiltered("resources")){
+      $this->applyFilterByFieldValue("links.id", "IN", $this->getFilter()->getValue("resources"),"list");
+    }
+    if($this->getFilter()->isFiltered("period")){
+      $date = explode("-", $this->getFilter()->getValue("period"));
+      $this->applyFilterByFieldBetweenValues("stats.timestamp",$date[0],$date[1], "int");
+    }
     return $this->fetchAll(
       "(".
         "`stats` ".
@@ -275,26 +340,6 @@ class LAProxyDataSource extends MySQLiDataSource {
         "ON `stats`.`link` = `links`.`url`".
       ")"
     );
-  }
-
-  public function filterByUser($user){
-    $this->filterByFieldValue("user","=",$user,"int");
-  }
-  
-  public function filterByUsers($users){
-    $this->filterByFieldValue("user","IN",$users,"list");
-  }
-  
-  public function filterByResource($resource){
-    $this->filterByFieldValue("linkId","=",$resource,"int");
-  }
-  
-  public function filterByResources($resources){
-    $this->filterByFieldValue("linkId","IN",$resources,"list");
-  }
-  
-  public function filterByDate($from, $till){
-    $this->filterByFieldBetweenValues("timestamp",$from,$till, "int");
   }
 }
 ?>

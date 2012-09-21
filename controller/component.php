@@ -11,42 +11,39 @@ abstract class Component {
 
 abstract class DataComponent extends Component {
   private $filter = null;
+  private $filterId = 'filter';
+  private $filterComponent = null;
 
-  public function filter($filter){
-    $fields = $this->getFilterFields();
-    if($fields != null){
-      $this->filter = array();
-      foreach($fields as $field){
-        if(isset($filter[$field['name']])){
-          $this->filter[$field['name']] = $filter[$field['name']];
-        }
-      }
-    }
+  public function setFilterId($id){
+    $this->filterId = $id;
+  }
+
+  public function getFilterId(){
+    return $this->filterId;
   }
 
   public function isFiltered($field){
-    return (
-      $this->filter != null &&
-      isset($this->filter[$field]) &&
-      $this->filter[$field] != null
-    );
+    return $this->getFilterComponent()->isFiltered($field);
   }
 
   public function getFilterValue($field){
-    return $this->filter[$field];
+    return $this->getFilterComponent()->getValue($field);
   }
 
-  protected function getFilterFields(){
+  public function getFilterFields(){
     return null;
   }
   
-  public function getFilterComponent($id){
-    $fields = $this->getFilterFields();
-    if($fields != null){
-      return new FilterComponent($id, $this, $fields);
-    }else{
-      return null;
+  public function initFilterComponent(){
+    $id = $this->getFilterId();
+    $this->filterComponent = new FilterComponent($id, $this);
+  }
+
+  public function getFilterComponent(){
+    if($this->filterComponent == null){
+      $this->initFilterComponent();
     }
+    return $this->filterComponent;
   }
 }
 
@@ -54,16 +51,15 @@ class FilterComponent extends Component {
   private $identifier;
   private $component;
   private $fields;
-  private $values;
+  private $values = array();
 
   const TextFilterType = 0;
   const SelectFilterType = 1;
   const RadioFilterType = 2;
 
-  public function __construct($id, $component, $fields){
+  public function __construct($id, $component){
     $this->identifier = $id;
     $this->component = $component;
-    $this->fields = $fields;
   }
 
   public function getComponent(){
@@ -75,7 +71,24 @@ class FilterComponent extends Component {
   }
 
   public function getFilterFields(){
-    return $this->fields;
+    $fields = $this->component->getFilterFields();
+    if($fields == null) $fields = array();
+    return $fields;
+  }
+
+  public function setValue($field, $value){
+    $this->values[$field] = $value;
+  }
+
+  public function getValue($field){
+    return $this->values[$field];
+  }
+
+  public function isFiltered($field){
+    return (
+      isset($this->values[$field]) &&
+      $this->values[$field] !== null
+    );
   }
 
   public function display(){
@@ -97,7 +110,7 @@ class FilterComponent extends Component {
           $html .= "<label for='".$field['name']."'>".$field['label']."</label>\n";
           if(isset($field['multiple']) && $field['multiple'] == true){
             $html .= "<select name='".$field['name']."[]' multiple='multiple' "
-              ."style='height: ".(30+sizeof($field['options'])*10)."px;'>";
+              ."style='height: 400px;'>";
           }else{
             $html .= "<select name='".$field['name']."'>\n";
           }
@@ -129,18 +142,15 @@ class FilterComponent extends Component {
 
   public function process(){
     if(isset($_POST["filter"]) && $_POST["filter"] == $this->getIdentifier()){
-      $filter = array();
       foreach($_POST as $name=>$value){
         if($name == "filter") continue;
         if(substr($name, -2) == "[]") $name = substr($name, 0, -2);
         if($value == ""){
-          $filter[$name] = null;
+          $this->values[$name] = null;
         }else{
-          $filter[$name] = $value;
           $this->values[$name] = $value;
         }
       }
-      $this->getComponent()->filter($filter);
     }
   }
 }
@@ -193,6 +203,7 @@ class AggregatedDocumentList extends ListComponent {
 
   public function __construct($dbh){
     $source = new LAProxyDataSource($dbh);
+    $source->setFilter($this->getFilterComponent());
     $this->source = $source;
     $struct = new MatrixDataStructure();
     $struct->setYField("link");
@@ -207,25 +218,24 @@ class AggregatedDocumentList extends ListComponent {
   }
 
   public function display(){
-    if(
-      $this->isFiltered("begin_date") ||
-      $this->isFiltered("end_date")
-    ){
-      $this->source->filterByDate(
-        ($this->isFiltered("begin_date")?$this->getFilterValue("begin_date"):0),
-        ($this->isFiltered("end_date")?$this->getFilterValue("end_date"):PHP_INT_MAX)
-      );
-    }
     $data = $this->source->getAggregatedStats();
-    if($this->debug) echo $this->source->getQuery();
     $this->struct->loadData($data);
     return $this->view->display($this->struct);
   }
 
-  protected function getFilterFields(){
+  public function getFilterFields(){
     return array(
-      array( "name" =>  "begin_date", "label" => "Begin timestamp", "type" => FilterComponent::TextFilterType),
-      array( "name" =>  "end_date", "label" => "End timestamp", "type" => FilterComponent::TextFilterType)
+      array( 
+        "name" => "period", 
+        "label" => "Period",
+        "type" => FilterComponent::SelectFilterType,
+        "options" => array(
+          "" => "No filter",
+          "1335848400-1338526799" => "1/05 - 31/05",
+          "1338526800-1341118799" => "1/06 - 30/06",
+          "1341118800-1343797199" => "1/07 - 31/07"
+        )
+      )
     );
   }
 }
@@ -233,6 +243,7 @@ class AggregatedDocumentList extends ListComponent {
 class ResourceList extends ListComponent {
   public function __construct($dbh){
     $this->source = new LAProxyDataSource($dbh);
+    $this->source->setFilter($this->getFilterComponent());
     $this->struct = new RowDataStructure();
     $this->view = new GTableView();
     $this->view->setColumns(array(
@@ -247,11 +258,16 @@ class ResourceList extends ListComponent {
     $this->struct->loadData($data);
     return $this->view->display($this->struct->getStructure());
   }
+  
+  public function getFilterFields(){
+    array();
+  }
 }
 
 class UserList extends ListComponent {
   public function __construct($dbh){
     $this->source = new LAProxyDataSource($dbh);
+    $this->source->setFilter($this->getFilterComponent());
     $this->struct = new RowDataStructure();
     $this->view = new GTableView();
     $this->view->setColumns(array(
@@ -269,12 +285,30 @@ class UserList extends ListComponent {
     $this->struct->loadData($data);
     return $this->view->display($this->struct->getStructure());
   }
+  
+  public function getFilterFields(){
+    $users = $this->source->getUsers();
+    $user_options = array();
+    foreach($users as $user){
+      $user_options[$user['id']] = $user['surname'].", ".$user['firstname']." (".$user['username'].")";
+    }
+    return array(
+      array(
+        "name" => "users", 
+        "label" => "Users",
+        "type" => FilterComponent::SelectFilterType,
+        "options" => $user_options,
+        "multiple" => true
+      )
+    );
+  }
 }
 
 class ResourceTimeGraph extends ListComponent {
   
   public function __construct($dbh){
     $this->source = new LAProxyDataSource($dbh);
+    $this->source->setFilter($this->getFilterComponent());
     $this->struct = new RowDataStructure();
     $this->view = new BubbleGraphView();
     $this->view->setVAxisTitle("Resource");
@@ -282,41 +316,41 @@ class ResourceTimeGraph extends ListComponent {
   }
 
   public function display(){
-    if($this->isFiltered("users")){
-      if(is_array($this->getFilterValue("users"))){
-        $this->source->filterByUsers($this->getFilterValue("users"));
-      }else{
-        $this->source->filterByUsers(explode(",", $this->getFilterValue("users")));
-      }
-    }
-    if(
-      $this->isFiltered("period")
-    ){
-      $period = explode("-", $this->getFilterValue("period"));
-      $this->source->filterByDate($period[0], $period[1]);
-    }
     $data = $this->source->getAggregatedResourceStats();
     $this->struct->loadData($data);
     return $this->view->display($this->struct);
   }
   
-  protected function getFilterFields(){
+  public function getFilterFields(){
     $users = $this->source->getUsers();
     $user_options = array();
     foreach($users as $user){
       $user_options[$user['id']] = $user['surname'].", ".$user['firstname']." (".$user['username'].")";
     }
+    // Generate period list
+    $periods = array("" => "Any period");
+    $year = intval(date("Y"));
+    for($i = 1; $i <= 12; $i++){
+      $from = mktime(00,00,00,$i,1,$year);
+      $till = mktime(00,00,00,$i+1,1,$year)-1;
+      $periods[$from."-".$till] = "1/$i - ".date("d",$till)."/$i";
+    }
     return array(
+      array(
+        "name" => "course",
+        "label" => "Course",
+        "type" => FilterComponent::SelectFilterType,
+        "options" => array(
+          "" => "Any course",
+          "UVA_BW1019_2012" => "Universiteit van Amsterdam, BW1019, 2012",
+          "VU_KNO_2012" => "Vrije Universiteit, KNO, 2012"
+        )
+      ),
       array( 
         "name" => "period", 
         "label" => "Period",
         "type" => FilterComponent::SelectFilterType,
-        "options" => array(
-          "" => "No filter",
-          "1335848400-1338526799" => "1/05 - 31/05",
-          "1338526800-1341118799" => "1/06 - 30/06",
-          "1341118800-1343797199" => "1/07 - 31/07"
-        )
+        "options" => $periods
       ),
       array(
         "name" => "users", 
@@ -333,6 +367,8 @@ class UserTimeGraph extends ListComponent {
   
   public function __construct($dbh){
     $this->source = new LAProxyDataSource($dbh);
+    $this->getFilterComponent()->setValue("course", "UvA");
+    $this->source->setFilter($this->getFilterComponent());
     $this->struct = new RowDataStructure();
     $this->view = new BubbleGraphView();
     $this->view->setVAxisTitle("Student");
@@ -340,41 +376,43 @@ class UserTimeGraph extends ListComponent {
   }
 
   public function display(){
-    if($this->isFiltered("resources")){
-      if(is_array($this->getFilterValue("resources"))){
-        $this->source->filterByResources($this->getFilterValue("resources"));
-      }else{
-        $this->source->filterByResources(explode(",", $this->getFilterValue("resources")));
-      }
-    }
-    if(
-      $this->isFiltered("period")
-    ){
-      $period = explode("-", $this->getFilterValue("period"));
-      $this->source->filterByDate($period[0], $period[1]);
-    }
     $data = $this->source->getAggregatedUserStats();
+    echo $this->source->getQuery();
     $this->struct->loadData($data);
     return $this->view->display($this->struct);
   }
   
-  protected function getFilterFields(){
+  public function getFilterFields(){
+    // Generate resource list
     $resources = $this->source->getLinks();
     $resource_options = array();
     foreach($resources as $resource){
       $resource_options[$resource['id']] = $resource['title'];
     }
+    // Generate period list
+    $periods = array("" => "Any period");
+    $year = intval(date("Y"));
+    for($i = 1; $i <= 12; $i++){
+      $from = mktime(00,00,00,$i,1,$year);
+      $till = mktime(00,00,00,$i+1,1,$year)-1;
+      $periods[$from."-".$till] = "1/$i - ".date("d",$till)."/$i";
+    }
     return array(
+      array(
+        "name" => "course",
+        "label" => "Course",
+        "type" => FilterComponent::SelectFilterType,
+        "options" => array(
+          "" => "Any course",
+          "UVA_BW1019_2012" => "Universiteit van Amsterdam, BW1019, 2012",
+          "VU_KNO_2012" => "Vrije Universiteit, KNO, 2012"
+        )
+      ),
       array( 
         "name" => "period", 
         "label" => "Period",
         "type" => FilterComponent::SelectFilterType,
-        "options" => array(
-          "" => "No filter",
-          "1335848400-1338526799" => "1/05 - 31/05",
-          "1338526800-1341118799" => "1/06 - 30/06",
-          "1341118800-1343797199" => "1/07 - 31/07"
-        )
+        "options" => $periods
       ),
       array(
         "name" => "resources", 

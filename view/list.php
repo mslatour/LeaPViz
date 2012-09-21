@@ -3,10 +3,7 @@ $visited_docs = new AggregatedDocumentList($db);
 // Show the query that was performed
 //$visited_docs->debug();
 // Only show the range of users representing students.
-$visited_docs->getSource()->filterByUsers(range(2,148));
-// Only show statistics from before August 2012
-//$visited_docs->getSource()->filterByDate(0,1343797200);
-
+$visited_docs->getFilterComponent()->setValue("users",range(2,148));
 // Clear empty cells
 $visited_docs->getStruct()->setEmptyValue("");
 

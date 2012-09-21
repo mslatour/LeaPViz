@@ -15,6 +15,8 @@ $db = new MySQLiHandler(
   $SETTING_DB_DATABASE
 );
 
+if(!isset($_GET['v'])) $_GET['v'] = null;
+
 switch($_GET['v']){
   case 'list':
     include("view/list.php");
