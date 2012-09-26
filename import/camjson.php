@@ -1,6 +1,6 @@
 <?php
-$deactivated = false;
-$file = "Fronter_20120920_1.json.9";
+$deactivated = true;
+$file = "Fronter_20120920_1.json.10";
 $course = "VU_KNO_2012";
 
 include("../settings.php");

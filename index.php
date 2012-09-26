@@ -24,9 +24,12 @@ switch($_GET['v']){
   case 'resource_time_graph':
     include("view/resource_time_graph_view.php");
     break;
+  case 'graded_user_time_graph':
+    include("view/graded_user_time_graph_view.php");
+    break;
   default:
   case 'user_time_graph':
-  include("view/user_time_graph_view.php");
-  break;
+    include("view/user_time_graph_view.php");
+    break;
 }
 ?>

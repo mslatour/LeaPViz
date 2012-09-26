@@ -316,6 +316,7 @@ class LAProxyDataSource extends MySQLiDataSource {
       "UNIX_TIMESTAMP(FROM_UNIXTIME(`stats`.`timestamp`,'%Y-%m-%d 00:00:00'))"=>"`timestamp`",
       "FROM_UNIXTIME(`stats`.`timestamp`,'%Y-%m-%d')"=>"`date`",
       "`stats`.`user`"=>"`user`",
+      "`grades`.`grade`"=>"grade",
       "COUNT(DISTINCT `link`, FROM_UNIXTIME(`timestamp` , '%d-%m-%Y'))"=>"`count`"
     ));
     $this->group("`stats`.`user`");
@@ -336,10 +337,14 @@ class LAProxyDataSource extends MySQLiDataSource {
     return $this->fetchAll(
       "(".
         "`stats` ".
-        "LEFT JOIN `links` ".
-        "ON `stats`.`link` = `links`.`url`".
+        "LEFT JOIN (`links`,`grades`) ".
+        "ON (`stats`.`link` = `links`.`url` AND `stats`.`user` = `grades`.`student`)".
       ")"
     );
+  }
+
+  public function getPathUserStats($path_begin, $path_end){
+    
   }
 }
 ?>

@@ -308,6 +308,7 @@ class ResourceTimeGraph extends ListComponent {
   
   public function __construct($dbh){
     $this->source = new LAProxyDataSource($dbh);
+    $this->getFilterComponent()->setValue("course", "UVA_BW1019_2012");
     $this->source->setFilter($this->getFilterComponent());
     $this->struct = new RowDataStructure();
     $this->view = new BubbleGraphView();
@@ -331,9 +332,14 @@ class ResourceTimeGraph extends ListComponent {
     $periods = array("" => "Any period");
     $year = intval(date("Y"));
     for($i = 1; $i <= 12; $i++){
+      $from = mktime(00,00,00,$i,1,$year-1);
+      $till = mktime(00,00,00,$i+1,1,$year-1)-1;
+      $periods[$from."-".$till] = "1/$i - ".date("d",$till)."/$i/".($year-1);
+    }
+    for($i = 1; $i <= 12; $i++){
       $from = mktime(00,00,00,$i,1,$year);
       $till = mktime(00,00,00,$i+1,1,$year)-1;
-      $periods[$from."-".$till] = "1/$i - ".date("d",$till)."/$i";
+      $periods[$from."-".$till] = "1/$i - ".date("d",$till)."/$i/$year";
     }
     return array(
       array(
@@ -367,7 +373,7 @@ class UserTimeGraph extends ListComponent {
   
   public function __construct($dbh){
     $this->source = new LAProxyDataSource($dbh);
-    $this->getFilterComponent()->setValue("course", "UvA");
+    $this->getFilterComponent()->setValue("course", "UVA_BW1019_2012");
     $this->source->setFilter($this->getFilterComponent());
     $this->struct = new RowDataStructure();
     $this->view = new BubbleGraphView();
@@ -377,7 +383,6 @@ class UserTimeGraph extends ListComponent {
 
   public function display(){
     $data = $this->source->getAggregatedUserStats();
-    echo $this->source->getQuery();
     $this->struct->loadData($data);
     return $this->view->display($this->struct);
   }
@@ -393,9 +398,93 @@ class UserTimeGraph extends ListComponent {
     $periods = array("" => "Any period");
     $year = intval(date("Y"));
     for($i = 1; $i <= 12; $i++){
+      $from = mktime(00,00,00,$i,1,$year-1);
+      $till = mktime(00,00,00,$i+1,1,$year-1)-1;
+      $periods[$from."-".$till] = "1/$i - ".date("d",$till)."/$i/".($year-1);
+    }
+    for($i = 1; $i <= 12; $i++){
       $from = mktime(00,00,00,$i,1,$year);
       $till = mktime(00,00,00,$i+1,1,$year)-1;
-      $periods[$from."-".$till] = "1/$i - ".date("d",$till)."/$i";
+      $periods[$from."-".$till] = "1/$i - ".date("d",$till)."/$i/$year";
+    }
+    // Generate users
+    $users = $this->source->getUsers();
+    $user_options = array();
+    foreach($users as $user){
+      $user_options[$user['id']] = $user['surname'].", ".$user['firstname']." (".$user['username'].")";
+    }
+    return array(
+      array(
+        "name" => "course",
+        "label" => "Course",
+        "type" => FilterComponent::SelectFilterType,
+        "options" => array(
+          "" => "Any course",
+          "UVA_BW1019_2012" => "Universiteit van Amsterdam, BW1019, 2012",
+          "VU_KNO_2012" => "Vrije Universiteit, KNO, 2012"
+        )
+      ),
+      array( 
+        "name" => "period", 
+        "label" => "Period",
+        "type" => FilterComponent::SelectFilterType,
+        "options" => $periods
+      ),
+      array(
+        "name" => "resources", 
+        "label" => "Resources",
+        "type" => FilterComponent::SelectFilterType,
+        "options" => $resource_options,
+        "multiple" => true
+      ),
+      array(
+        "name" => "users", 
+        "label" => "Users",
+        "type" => FilterComponent::SelectFilterType,
+        "options" => $user_options,
+        "multiple" => true
+      )
+    );
+  }
+}
+
+class PathTimeGraph extends ListComponent {
+  
+  public function __construct($dbh){
+    $this->source = new LAProxyDataSource($dbh);
+    $this->getFilterComponent()->setValue("course", "UVA_BW1019_2012");
+    $this->source->setFilter($this->getFilterComponent());
+    $this->struct = new RowDataStructure();
+    $this->view = new BubbleGraphView();
+    $this->view->setVAxisTitle("Student");
+    $this->view->setHAxisTitle("Day of month");
+  }
+
+  public function display(){
+    $data = $this->source->getAggregatedUserStats();
+    $this->struct->loadData($data);
+    return $this->view->display($this->struct);
+  }
+  
+  public function getFilterFields(){
+    // Generate resource list
+    $resources = $this->source->getLinks();
+    $resource_options = array();
+    foreach($resources as $resource){
+      $resource_options[$resource['id']] = $resource['title'];
+    }
+    // Generate period list
+    $periods = array("" => "Any period");
+    $year = intval(date("Y"));
+    for($i = 1; $i <= 12; $i++){
+      $from = mktime(00,00,00,$i,1,$year-1);
+      $till = mktime(00,00,00,$i+1,1,$year-1)-1;
+      $periods[$from."-".$till] = "1/$i - ".date("d",$till)."/$i/".($year-1);
+    }
+    for($i = 1; $i <= 12; $i++){
+      $from = mktime(00,00,00,$i,1,$year);
+      $till = mktime(00,00,00,$i+1,1,$year)-1;
+      $periods[$from."-".$till] = "1/$i - ".date("d",$till)."/$i/$year";
     }
     return array(
       array(
@@ -424,5 +513,4 @@ class UserTimeGraph extends ListComponent {
     );
   }
 }
-
 ?>
