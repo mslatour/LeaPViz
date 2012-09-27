@@ -1,0 +1,11 @@
+form {
+  width: 100%;
+}
+
+input, select, label {
+  display: block;
+}
+
+label {
+  font-weight: bold;
+}
