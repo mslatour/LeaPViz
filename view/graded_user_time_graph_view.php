@@ -15,6 +15,7 @@ $user_time_graph->getView()->setVStepsize(2);
 $user_time_graph->getView()->setMaxVAxis(156);
 $user_time_graph->getView()->setHStepsize(1);
 $user_time_graph->getView()->setMaxHAxis(32);
+$user_time_graph->getView()->setColors(array("yellow", "red"));
 $user_time_graph->getStruct()->setHeaderRow(array("ID","Day","Student","Grade","# Resources"));
 $user_time_graph->getStruct()->setRowModifier(function($row){
   return array(

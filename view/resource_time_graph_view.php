@@ -11,13 +11,14 @@ $resource_list->getStruct()->setRowModifier(function($row){
 $resource_time_graph = new ResourceTimeGraph($db);
 $resource_time_graph->getView()->setVStepsize(2);
 $resource_time_graph->getView()->setMaxVAxis(120);
-$resource_time_graph->getView()->setHStepsize(1);
-$resource_time_graph->getView()->setMaxHAxis(32);
+$resource_time_graph->getView()->setHStepsize(.5);
+$resource_time_graph->getView()->setMinHAxis(11);
+$resource_time_graph->getView()->setMaxHAxis(24);
 $resource_time_graph->getStruct()->setHeaderRow(array("ID","Day","Resource","Type","# Users"));
 $resource_time_graph->getStruct()->setRowModifier(function($row){
   return array(
     "",
-    intval(date("d", $row['timestamp'])),
+    floatval(date("H", $row['timestamp'])+((date("i", $row['timestamp'])/60))),
     intval($row['linkId']),
     $row['linkType'],
     intval($row['count'])
@@ -30,6 +31,8 @@ $resource_list->getSource()->setFilter($resource_time_filter);
 if(isset($_POST)){
   $resource_time_filter->process();
 }
+
+$resource_time_filter->setValue("period", "1336453200-1336539599");
 
 $tabs = new TabbedContainer();
 $tabs->addComponent($resource_time_graph, 'Graph');

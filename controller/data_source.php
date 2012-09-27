@@ -280,7 +280,7 @@ class LAProxyDataSource extends MySQLiDataSource {
 
   public function getAggregatedResourceStats(){
     $this->select(array(
-      "UNIX_TIMESTAMP(FROM_UNIXTIME(`stats`.`timestamp`,'%Y-%m-%d 00:00:00'))"=>"`timestamp`",
+      "UNIX_TIMESTAMP(FROM_UNIXTIME(`stats`.`timestamp`,'%Y-%m-%d %H:%i:%s'))"=>"`timestamp`",
       "FROM_UNIXTIME(`stats`.`timestamp`,'%Y-%m-%d')"=>"`date`",
       "`links`.`title`"=>"`link`",
       "`links`.`type`"=>"`linkType`",

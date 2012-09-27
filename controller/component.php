@@ -313,7 +313,7 @@ class ResourceTimeGraph extends ListComponent {
     $this->struct = new RowDataStructure();
     $this->view = new BubbleGraphView();
     $this->view->setVAxisTitle("Resource");
-    $this->view->setHAxisTitle("Day of month");
+    $this->view->setHAxisTitle("Hour of Day");
   }
 
   public function display(){
@@ -447,6 +447,7 @@ class UserTimeGraph extends ListComponent {
     );
   }
 }
+
 
 class PathTimeGraph extends ListComponent {
   

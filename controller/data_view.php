@@ -56,8 +56,10 @@ abstract class GoogleGraphView extends DataView {
   private $maxVAxis = 100;
   private $hStepsize = 10;
   private $maxHAxis = 100;
+  private $minHAxis = 1;
   private $vAxisTitle = "";
   private $hAxisTitle = "";
+  private $colors = null;
 
   public function setVStepSize($stepsize){
     $this->vStepsize = $stepsize;
@@ -78,9 +80,17 @@ abstract class GoogleGraphView extends DataView {
   public function setMaxVAxis($max){
     $this->maxVAxis = $max;
   }
-
+  
   protected function getMaxVAxis(){
     return $this->maxVAxis;
+  }
+  
+  public function setMinHAxis($min){
+    $this->minHAxis = $min;
+  }
+  
+  protected function getMinHAxis(){
+    return $this->minHAxis;
   }
 
   public function setMaxHAxis($max){
@@ -106,6 +116,15 @@ abstract class GoogleGraphView extends DataView {
   protected function getHAxisTitle(){
     return $this->hAxisTitle;
   }
+
+  public function setColors($colors){
+    $this->colors = $colors;
+  }
+
+  protected function getColors(){
+    return $this->colors;
+  }
+
 }
 
 class JSONView extends DataView {
@@ -235,10 +254,19 @@ class BubbleGraphView extends GoogleGraphView {
     $maxVAxis = $this->getMaxVAxis();
     $hStepsize = $this->getHStepSize();
     $maxHAxis = $this->getMaxHAxis();
+    $minHAxis = $this->getMinHAxis();
     $vAxisTitle = $this->getVAxisTitle();
     $hAxisTitle = $this->getHAxisTitle();
-    $gridlinesHAxis = ($maxHAxis/$hStepsize)+1;
+
+    $colors = $this->getColors();
+    if($colors != null){
+      $colorAxisStr = "colorAxis: { colors: ".json_encode($colors)."},";
+    }else{
+      $colorAxisStr = "";
+    }
+    $gridlinesHAxis = (($maxHAxis-$minHAxis)/$hStepsize)+1;
     $gridlinesVAxis = ($maxVAxis/$vStepsize)+1;
+
     $unique_id = "bubble_chart".time().rand();
     $html = <<<EOT
       <script type="text/javascript">
@@ -250,11 +278,13 @@ class BubbleGraphView extends GoogleGraphView {
           );
 
           var options = {
+            $colorAxisStr
             hAxis: {
               title: '$hAxisTitle',
-              minValue: 0,
+              minValue: $minHAxis,
               maxValue: $maxHAxis,
-              gridlines: {count: $gridlinesHAxis}
+              gridlines: {count: $gridlinesHAxis},
+              minorGridlines: {count: 1}
             },
             vAxis: {
               title: '$vAxisTitle',
