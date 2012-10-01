@@ -302,13 +302,14 @@ class LAProxyDataSource extends MySQLiDataSource {
       $date = explode("-", $this->getFilter()->getValue("period"));
       $this->applyFilterByFieldBetweenValues("stats.timestamp",$date[0],$date[1], "int");
     }
-    return $this->fetchAll(
+    $r = $this->fetchAll(
       "(".
         "`stats` ".
         "LEFT JOIN `links` ".
         "ON `stats`.`link` = `links`.`url`".
       ")"
     );
+    return $r;
   }
   
   public function getAggregatedUserStats(){
@@ -316,7 +317,8 @@ class LAProxyDataSource extends MySQLiDataSource {
       "UNIX_TIMESTAMP(FROM_UNIXTIME(`stats`.`timestamp`,'%Y-%m-%d 00:00:00'))"=>"`timestamp`",
       "FROM_UNIXTIME(`stats`.`timestamp`,'%Y-%m-%d')"=>"`date`",
       "`stats`.`user`"=>"`user`",
-      "`grades`.`grade`"=>"grade",
+      "`user`.`student`"=>"`student`",
+      "`grades`.`grade`"=>"`grade`",
       "COUNT(DISTINCT `link`, FROM_UNIXTIME(`timestamp` , '%d-%m-%Y'))"=>"`count`"
     ));
     $this->group("`stats`.`user`");
@@ -337,8 +339,9 @@ class LAProxyDataSource extends MySQLiDataSource {
     return $this->fetchAll(
       "(".
         "`stats` ".
-        "LEFT JOIN (`links`,`grades`) ".
-        "ON (`stats`.`link` = `links`.`url` AND `stats`.`user` = `grades`.`student`)".
+        "LEFT JOIN `links` ON `stats`.`link` = `links`.`url` ".
+        "LEFT JOIN `user` ON `stats`.`user` = `user`.`id` ".
+        "LEFT JOIN `grades` ON `stats`.`user` = `grades`.`student` ".
       ")"
     );
   }

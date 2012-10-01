@@ -238,7 +238,7 @@ class BubbleGraphView extends GoogleGraphView {
     $vAxisTitle = $this->getVAxisTitle();
     $hAxisTitle = $this->getHAxisTitle();
     $gridlinesHAxis = ($maxHAxis/$hStepsize)+1;
-    $gridlinesVAxis = ($maxVAxis/$vStepsize)+1;
+    $gridlinesVAxis = (($maxVAxis-112)/$vStepsize)+1;
     $unique_id = "bubble_chart".time().rand();
     $html = <<<EOT
       <script type="text/javascript">
@@ -259,14 +259,14 @@ class BubbleGraphView extends GoogleGraphView {
             vAxis: {
               title: '$vAxisTitle',
               direction: -1,
-              minValue: 0,
+              minValue: 112,
               maxValue: $maxVAxis,
               gridlines: {count: $gridlinesVAxis},
-              minorGridlines: {count: 1}
+              minorGridlines: {count: 2}
             },
-            sizeAxis : {maxValue: 148},
+            sizeAxis : {maxValue: 12},
             legend: {position: 'top'},
-            chartArea: {width: '90%', height: '90%',  top: 40},
+            chartArea: {width: '80%', height: '97%',  top: 40},
             bubble: {textStyle: {fontSize: 11}}
 
           };
@@ -275,7 +275,7 @@ class BubbleGraphView extends GoogleGraphView {
           chart.draw(data, options);
         }
       </script>
-      <div id="$unique_id" style="width: 1200px; height: 2000px;"></div>
+      <div id="$unique_id" style="width: 1400px; height: 9000px;"></div>
 EOT;
     return $html;
   }

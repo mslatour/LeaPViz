@@ -12,16 +12,16 @@ $user_list->getStruct()->setRowModifier(function($row){
 
 $user_time_graph = new UserTimeGraph($db);
 $user_time_graph->getView()->setVStepsize(2);
-$user_time_graph->getView()->setMaxVAxis(156);
+$user_time_graph->getView()->setMaxVAxis(702);
 $user_time_graph->getView()->setHStepsize(1);
-$user_time_graph->getView()->setMaxHAxis(32);
+$user_time_graph->getView()->setMaxHAxis(8);
 $user_time_graph->getStruct()->setHeaderRow(array("ID","Day","Student","Type","# Resources"));
 $user_time_graph->getStruct()->setRowModifier(function($row){
   return array(
     "",
-    intval(date("d", $row['timestamp'])),
+    intval(date("N", $row['timestamp'])),
     intval($row['user']),
-    ($row['user']>1&&$row['user']<149?"Student":"Teacher"),
+    ($row['student']==1?"Student":"Teacher"),
     intval($row['count'])
   );
 });
@@ -29,9 +29,13 @@ $user_time_graph->getStruct()->setRowModifier(function($row){
 $user_time_filter = $user_time_graph->getFilterComponent('user_time_filter');
 $user_list->getSource()->setFilter($user_time_filter);
 
+
 if(isset($_POST)){
   $user_time_filter->process();
 }
+$user_time_filter->setValue("period","1318827600-1319432399");
+
+$user_time_graph->display();
 
 $tabs = new TabbedContainer();
 $tabs->addComponent($user_time_graph, 'Graph');
