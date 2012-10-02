@@ -26,3 +26,20 @@ The purpose of a data structure is two-fold. First of all it provides an API to 
 
 ### Data views ###
 A data view basically extract the data from a data structure and generates some visual representation of it. The definition of a data view is quite broad in its interpretation since one of the currently implemented data views simply generates a JSON string encoding of the table. Other data views generate the javascript and HTML code necessary to show a Google Chart visualisation of the data (which actually uses the JSON data view). It is however always the case that a data view projects the internally mutable data onto some fixed external representation, which is typically outputed to the browser. That is of course in contrast with data structures whose deliberate intention it is to maintain mutable objects.
+
+### Component ###
+A component joins a specific data source, structure and view (or multiple ones) with as result a specific visualisation. A component has therefore less of a general-purpose intention than data source, structure and view have. A component typically initiates all required entities in its constructor but doesn't retrieve the data before the component is displayed. That enables adjustments of the component that should affect the end result in some way. The largest part of these settings are in fact filters on the data source (e.g. the relevant time period or the desired subset of resources) that is used in the component. These settings are set using FilterComponents, which will be described later.  Each component that caters for this method of filtering can provide a FilterComponent, or allow setting of a different FilterComponent. The component forwards the FilterComponent to the data source before requesting the data. The data source can then extract relevant filter options from the FilterComponent.
+
+#### FilterComponents ####
+A FilterComponent serves two purposes:
+
+1. being a component that displays a HTML form containing input fields for the available filters. The available filters are set by the component to which this FilterComponent belongs.
+2. being a placeholder for settings that can be set either by the FilterComponent itself when processing the HTML form or by the execution of the setter somewhere in the code of the application.
+
+The main advantages of having a FilterComponent compared to having normal functions in the data source for each setting are that both ways of filtering are dealt with in the same way and that settings can be persistant over time and over various components.
+
+### UI Elements ###
+UI Elements simply combine multiple components by generating the necessary HTML and javascript to layout it.
+
+### Views ###
+Views are specific pages that can be seen as a specific dashboard of UI elements.
